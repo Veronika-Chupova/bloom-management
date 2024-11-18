@@ -93,7 +93,7 @@ app.prepare().then(() => {
 server.use(express.static(root))
 server.use(express.urlencoded({ extended: true }))
 server.use(cors({
-    origin: ['http://localhost:3000', 'https://your-nextjs-app.com'],            //modify
+    origin: ['http://localhost:3000', 'https://bloom-management-e3a1f4b07ded.herokuapp.com/'],            //modify
     credentials: true
 }))
 server.use(express.json())
