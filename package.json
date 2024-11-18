@@ -4,10 +4,11 @@
     "scripts": {
         "build": "next build",
         "start": "node server/server.js",
-        "heroku-postbuild": "npm install --prefix client && npm run build --prefix client"
+        "heroku-postbuild": "npm install --prefix client && npm run build --prefix client --verbose"
     },
     "engines": {
-        "node": ">=18.x"
+        "node": "20.x",
+        "npm": "9.x"
     },
     "dependencies": {
         "express": "^4.21.1",
