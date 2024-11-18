@@ -1,0 +1,17 @@
+{
+    "name": "bloom-management-app",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "next build",
+        "start": "node server/server.js"
+    },
+    "engines": {
+        "node": ">=16.x"
+    },
+    "dependencies": {
+        "express": "^4.21.1",
+        "next": "^15.0.3",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
+    }
+}
