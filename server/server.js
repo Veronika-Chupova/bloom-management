@@ -151,11 +151,27 @@ server.get("/get-latest/:id", (req,res) => {
 
 server.post ("/upload-image/:id", (req,res) => {
     const id = req.params.id
-    const formData = new formidable.IncomingForm()
+    const formData = new formidable.IncomingForm({maxFileSize: 50 * 1024 * 1024})
+    formData.onPart = function (part) {
+        const allowedTypes = ['image/png', 'image/jpeg']
+    
+        if (part.mime && !allowedTypes.includes(part.mime)) {
+            console.error(`Unsupported file type: ${part.mime}`)
+            return // Skip unsupported files
+        }
+    
+        this.handlePart(part);
+    };
     formData.parse(req, async (err, fields, files) => {
         if (err) {
             return res.status(500).json({ error: "File upload failed" })
         }
+        form.onPart = function (part) {
+            if (part.mime && !['image/png', 'image/jpeg', 'image/jpg', 'image/gif'].includes(part.mime)) {
+                return this._error(new Error('Unsupported file type'));
+            }
+            this.handlePart(part);
+        };
         const {originalFilename, mimetype, size, filepath} = files.file[0] // Extract first file
         const fileContent = await fs.readFile(filepath) // Read binary content
         const bufferContent = Buffer.from(fileContent)
