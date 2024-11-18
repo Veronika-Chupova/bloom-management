@@ -172,7 +172,7 @@ function ObjectDetails ({ isReadOnly, property }) {
                             readOnly = {readOnly}
                         />
                     </div>
-                    <div className="prop-inputs-row">
+                    <div className="prop-inputs-row toggler-row">
                         <ToggleBtn 
                             key={uuidv4()} 
                             handleToggleInput={handleToggleInput}

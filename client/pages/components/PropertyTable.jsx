@@ -19,12 +19,12 @@ function PropertyTable ({ objectItems}) {
         <table>
             <thead>
                 <tr>
-                    <th>Object ID</th>
+                    <th>ID</th>
                     <th>Address</th>
                     <th>Availability</th>
                     <th>Agent</th>
                     <th>Price</th>
-                    <th>Object Link</th>
+                    <th>Link</th>
                     <th>Type</th>
                     <th>Status</th>
                 </tr>

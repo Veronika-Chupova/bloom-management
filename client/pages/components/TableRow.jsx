@@ -3,8 +3,8 @@ function TableRow ({ handleRowClick, objectID, link, status, objectData }) {
     return <tr className="table-row" onClick={()=>handleRowClick(objectID)}>
                             <td>{objectID}</td>
                             <td>{objectData?.address}</td>
-                            <td></td>
-                            <td></td>
+                            <td>{objectData?.availableDate}</td>
+                            <td>Agent Name</td>
                             <td>{objectData?.pricePPPW}</td>
                             <td data-name="link">
                                 {link && <a href={link} target="_blank">
