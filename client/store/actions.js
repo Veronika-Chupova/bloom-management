@@ -1,6 +1,6 @@
 import {v4 as uuidv4} from "uuid"
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
+const apiBaseUrl = String(process.env.NEXT_PUBLIC_API_BASE_URL)
 
 async function fileConverter (file) {
     if (Buffer.isBuffer(file)) {
