@@ -21,7 +21,7 @@ function PropertyTable ({ objectItems}) {
                 <tr>
                     <th>ID</th>
                     <th>Address</th>
-                    <th>Availability</th>
+                    <th className="availability">Availability</th>
                     <th>Agent</th>
                     <th>Price</th>
                     <th>Link</th>
