@@ -1,4 +1,4 @@
-import { createStore } from "redux"
+import { configureStore } from '@reduxjs/toolkit'
 import { createWrapper } from "next-redux-wrapper"
 
 const defaultState = {
@@ -36,9 +36,6 @@ const reducer = (state = defaultState, action) => {
                     gallery: action.payload.gallery}
                 ]
         }
-
-        case "NEW_OBJECT":
-            return {...state, newObjectID: action.objectID, status: action.status}
 
         case "ADD_TO_GALLERY":
             return {...state, items: state.items.map(element => {
@@ -98,7 +95,11 @@ const reducer = (state = defaultState, action) => {
 }
 
 // const store = createStore (reducer)
-const makeStore = () => createStore(reducer)
+const makeStore = () =>
+  configureStore({
+    reducer: reducer,
+    devTools: process.env.NODE_ENV !== 'production',
+  });
 
 // export default store
 export const wrapper = createWrapper(makeStore)
