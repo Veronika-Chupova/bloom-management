@@ -13,7 +13,7 @@ function TableRow ({ handleRowClick, objectID, link, status, objectData }) {
                             <td>{objectData?.address}</td>
                             <td className="availability">{objectData?.availableDate && dateFormat}</td>
                             <td>Agent Name</td>
-                            <td>{objectData?.pricePPPW}</td>
+                            <td>{ (objectData?.pricePPPW && String(objectData?.pricePPPW) + " pppw") || (objectData?.pricePCM && String(objectData?.pricePCM + " pcm")) }</td>
                             <td data-name="link">
                                 {link && <a href={link} target="_blank">
                                     <div>

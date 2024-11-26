@@ -9,7 +9,6 @@ function PropertyTable ({ objectItems}) {
     const dispatch = useDispatch()
 
     async function handleRowClick (objectID) {
-        // await updateObject (dispatch, objectID)
         router.push({
             pathname: "/property-details",
             query: {objectID: objectID}})        //make proper linking

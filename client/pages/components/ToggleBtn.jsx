@@ -2,16 +2,14 @@ import { useState } from "react"
 
 function ToggleBtn ({ handleToggleInput, value, title, label, disabled }) {
     const btnStyle = {
-        yes: String(value) === String (1) ? " active-btn" : "",
-        no: String(value) === String (0) ? " active-btn" : ""
+        yes: value === true ? " active-btn" : "",
+        no: value === false ? " active-btn" : ""
     }
-    // const [toggler, setToggler] = useState (btnStyle)
 
     function handleTogglerClick (event) {
         event.preventDefault ()
         const value = event.target.value
-        // setToggler ({...btnStyle, [name]: " active-btn"})
-        handleToggleInput(title, value)
+        handleToggleInput( title, Boolean(Number(value)) )
     }
 
     return <span className="prop-input-container">

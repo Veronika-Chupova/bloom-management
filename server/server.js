@@ -23,7 +23,6 @@ const connectionURI = String(process.env.MONGO_URI)
     try {
         mongoose.connect(connectionURI, {
             useNewUrlParser: true,
-            useUnifiedTopology: true,
             serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
             tlsInsecure: false
         }).then (() => {
@@ -55,29 +54,29 @@ const gallerySchema = new mongoose.Schema({
     }
 })
 const propertySchema = new mongoose.Schema ({
-    objectID: Number,
-    status: String,
-    link: String,
-    address: String,
-    postcode: String,
-    letType: String,
-    minimumTerm: String,
-    propertyType: String,
-    shared: String,
-    parking: String,
-    students: String,
-    families: String,
-    children: String,
-    pets: String,
-    bedrooms: Number,
-    bathrooms: Number,
-    furnishing: String,
-    pricePPPW: Number,
-    pricePCM: Number,
-    deposit: Number,
-    bills: String,
-    availableDate: Date,
-    description: String
+    objectID: { type: Number },
+    status: { type: String },
+    link: { type: String },
+    address: { type: String },
+    postcode: { type: String },
+    letType: { type: String },
+    minimumTerm: { type: String },
+    propertyType: { type: String },
+    shared: { type: Boolean },
+    parking: { type: Boolean },
+    students: { type: Boolean },
+    families: { type: Boolean },
+    children: { type: Boolean },
+    pets: { type: Boolean },
+    bedrooms: { type: Number },
+    bathrooms: { type: Number },
+    furnishing: { type: String },
+    pricePPPW: { type: Number },
+    pricePCM: { type: Number },
+    deposit: { type: Number },
+    bills: { type: Boolean },
+    availableDate: { type: Date },
+    description: { type: String }
 })
 
 //STATIC FILES ROOT
@@ -97,7 +96,7 @@ server.use(cors({
     credentials: true
 }))
 server.use(express.json())
-server.use(express.static(root));
+server.use(express.static(root))
 
 //API
 server.get("/",(req, res) => {
@@ -201,6 +200,14 @@ server.post("/create-object", (req,res) => {
             objectData = Array.isArray(fields.objectData) && fields.objectData?.length === 1
                 ? JSON.parse(fields.objectData[0])
                 : JSON.parse(fields.objectData)
+
+            Object.keys(objectData).forEach ( key => {
+                if ( objectData[key] === "true" ) {
+                    objectData[key] = true
+                } else if ( objectData[key] === "false" ) {
+                    objectData[key] = false
+                }
+            })
         } catch (parseError) {
             return res.status(400).json({ error: "Invalid JSON in objectData" })
         }

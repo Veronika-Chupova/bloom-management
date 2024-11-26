@@ -2,6 +2,7 @@
 
 function CardInfo ({ propertyData }) {
     const {
+        propertyType = undefined,
         students = undefined,
         families = undefined,
         children = undefined, 
@@ -10,28 +11,36 @@ function CardInfo ({ propertyData }) {
         parking = undefined,
         bills = undefined
     } = propertyData || {}
+    const suitText = []
+    const nonSuitText = []
 
     return <div className="card-info expansive">
         <div className="price-block">
-            <h3>£{propertyData?.pricePPPW} pppw</h3>
-            <p>£{propertyData?.pricePCM} pcm</p>
+            <h3>{ 
+                (propertyData?.pricePPPW && "£" + propertyData?.pricePPPW + "pppw") || 
+                (propertyData?.pricePCM && "£" + propertyData?.pricePCM + "pcm") 
+                }
+            </h3>
+            <p>{ propertyData?.pricePPPW && propertyData?.pricePCM ? ("£" + propertyData?.pricePCM + "pcm") : null }</p>
         </div>
         <div className="facility-block">
-            <p>{propertyData?.bedrooms} Bedrooms
-                <span>{Number(shared) ? ", Shared" : ""}</span>
+            <p>{propertyData?.bedrooms}
+                <span> Bedroom </span>
+                <span>{propertyType ?? ""}</span>
+                <span>{shared ? ", Shared" : ""}</span>
             </p>
             <p>{propertyData?.furnishing}</p>
-            <p>Suits for
-                <span>{Number(students) ? " Students" : ""}</span>
-                <span>{Number(families) ? " Families" : ""}</span>
-                <span>{Number(children) ? " Children" : ""}</span>
-                <span>{Number(pets) ? " Pets" : ""}</span>
+            <p>Suitable for
+                <span>{ students && " Students" }</span>
+                <span>{ families && " Families" }</span>
+                <span>{ children && " Children" }</span>
+                <span>{ pets && " Pets" }</span>
             </p>
-            <p>Does NOT suit for
-                <span>{!Number(students) && students ? " Students" : ""}</span>
-                <span>{!Number(families) && families ? " Families" : ""}</span>
-                <span>{!Number(children) && children ? " Children" : ""}</span>
-                <span>{!Number(pets) && pets ? " Pets" : ""}</span>
+            <p>Not suitable for
+                <span>{ students === false && " Students" }</span>
+                <span>{ families === false && " Families" }</span>
+                <span>{ children === false && " Children" }</span>
+                <span>{ pets === false && " Pets" }</span>
             </p>
         </div>
         <div className="address-block">

@@ -19,28 +19,28 @@ function ObjectDetails ({ isReadOnly, property }) {
     const router = useRouter()
     const [readOnly, setReadOnly] = useState (isReadOnly)
     const propertyData = property?.objectData     
-    const [status, setStatus] = useState (property?.status || "Draft")
+    const [status, setStatus] = useState (property?.status ?? "Draft")
     const [formData, setFormData] = useState ({
-        address: propertyData?.address || "",
-        postcode: propertyData?.postcode || "",
-        letType: propertyData?.letType || "",
-        minimumTerm: propertyData?.minimumTerm || "",
-        propertyType: propertyData?.propertyType || "",
-        shared: propertyData?.shared || "",
-        parking: propertyData?.parking || "",
-        students: propertyData?.students || "",
-        families: propertyData?.families || "",
-        children: propertyData?.children || "",
-        pets: propertyData?.pets || "",
-        bedrooms: propertyData?.bedrooms || "",
-        bathrooms: propertyData?.bathrooms || "",
-        furnishing: propertyData?.furnishing || "",
-        pricePPPW: propertyData?.pricePPPW || "",
-        pricePCM: propertyData?.pricePCM || "",
-        deposit: propertyData?.deposit || "",
-        bills: propertyData?.bills || "",
-        availableDate: propertyData?.availableDate || "",
-        description: propertyData?.description || ""
+        address: propertyData?.address ?? "",
+        postcode: propertyData?.postcode ?? "",
+        letType: propertyData?.letType ?? "",
+        minimumTerm: propertyData?.minimumTerm ?? "",
+        propertyType: propertyData?.propertyType ?? "",
+        shared: propertyData?.shared ?? undefined,
+        parking: propertyData?.parking ?? undefined,
+        students: propertyData?.students ?? undefined,
+        families: propertyData?.families ?? undefined,
+        children: propertyData?.children ?? undefined,
+        pets: propertyData?.pets ?? undefined,
+        bedrooms: propertyData?.bedrooms ?? "",
+        bathrooms: propertyData?.bathrooms ?? "",
+        furnishing: propertyData?.furnishing ?? "",
+        pricePPPW: propertyData?.pricePPPW ?? "",
+        pricePCM: propertyData?.pricePCM ?? "",
+        deposit: propertyData?.deposit ?? "",
+        bills: propertyData?.bills ?? undefined,
+        availableDate: propertyData?.availableDate ?? "",
+        description: propertyData?.description ?? ""
     })
 
     function handleInput (event) {
@@ -164,7 +164,7 @@ function ObjectDetails ({ isReadOnly, property }) {
                         />
                         <Selector 
                             key={uuidv4()}
-                            optionSet={["Room","Studio","House","Commercial"]}
+                            optionSet={["Room","Studio","Flat","Apartment","House","Commercial"]}
                             label="Property Type"
                             name="propertyType" 
                             value= {formData.propertyType}

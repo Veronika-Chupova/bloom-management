@@ -184,12 +184,14 @@ export function removeFromGallery (dispatch, data) {
 
 //PATCH Requests
 export function changeData (dispatch, data) {
+
     const newData = {status: data.status, ...data?.objectData}
     const requestOptions = {
         method: "PATCH",
         headers: {"Content-type" : "application/json"},
         body: JSON.stringify (newData)
       }
+
     fetch (`${apiBaseUrl}/update-property/${data.objectID}`, requestOptions)     //try-catch
         .then ((response) => {
             if (!response.ok) {
