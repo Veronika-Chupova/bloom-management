@@ -15,13 +15,16 @@ async function fileConverter (file) {
 }
 
 //GET Requests
-export default function getData (dispatch) {
+export default function getData (dispatch, status) {
     const requestOptions = {
         method: "GET",
         headers: {"Content-type" : "application/json"},
       }
+    const reqCURL = status 
+                    ? `${apiBaseUrl}/get-data/${status}` 
+                    : `${apiBaseUrl}/get-data`
 
-    fetch(`${apiBaseUrl}/`, requestOptions)     //try-catch
+    fetch(reqCURL, requestOptions)     //try-catch
         .then((response) =>{
             if (!response.ok) {
                 throw new Error ("Response status was not OK " + response.statusText)
@@ -38,6 +41,41 @@ export default function getData (dispatch) {
                         link: link,
                         gallery:[],
                         objectData: objectData
+                    }
+                    return newItem
+                })
+                dispatch ({type:"GET_DATA", payload: preparedData})
+            } else {
+                dispatch ({type:"GET_DATA", payload: []})
+            }
+        })
+}
+
+export function getFullData (dispatch, status) {
+    const requestOptions = {
+        method: "GET",
+        headers: {"Content-type" : "application/json"},
+      }
+    const reqCURL = status 
+                    ? `${apiBaseUrl}/get-fulldata/${status}` 
+                    : `${apiBaseUrl}/get-fulldata`
+
+    fetch(reqCURL, requestOptions)     //try-catch
+        .then((response) =>{
+            if (!response.ok) {
+                throw new Error ("Response status was not OK " + response.statusText)
+            }
+            return response.json()
+        })
+        .then ((data) => {
+            if (data?.length > 0) {
+                const preparedData = data.map( item => {
+                    const {objectID, status, ...objectData} = item?.property
+                    const newItem = {
+                        objectID: objectID,
+                        status: status,
+                        objectData: objectData,
+                        gallery: item?.gallery
                     }
                     return newItem
                 })
@@ -177,7 +215,6 @@ export function removeFromGallery (dispatch, data) {
             return response.json()
         })  
     } else {
-        console.log("Temp branch")
         dispatch ({type: "REMOVE_FROM_TEMP_GALLERY", payload: data.fileName})
     }
 }

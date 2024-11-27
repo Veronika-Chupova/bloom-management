@@ -99,17 +99,54 @@ server.use(express.json())
 server.use(express.static(root))
 
 //API
-server.get("/",(req, res) => {
-        const preparedData = Property.find({})
-        Property.find({})
+server.get("/get-data/:status?",(req, res) => {
+        const status = req?.params?.status || undefined
+        const filterOptions = status ? {status: status} : {}
+
+        Property.find(filterOptions)
             .then((preparedData) => {
                 res.status(200).json(preparedData)
             })
             .catch((err) => {
                 console.error("Error fetching data:", err)
                 res.status(500).json({message: "Internal Server Error"})
-            });
+            })
     })
+
+server.get("/get-fulldata/:status?", (req, res) => {
+    const status = req?.params?.status || undefined
+    const filterOptions = status ? {status: status} : {}
+    // const responseData = []
+
+    Property.find(filterOptions)
+        .then( foundProperties => {
+            const responseData = foundProperties.map( property => {
+                return Gallery.find( {refObjectID: property._id} )
+                .then( propertyGallery => {
+                    const preparedGallery = propertyGallery.map( item => {
+                        const base64File = item.gallery.content.toString("base64")
+                        const fileForRendering = `data:image/jpeg;base64,${base64File}`
+                        return {
+                            imageID: item._id,
+                            file: fileForRendering
+                        }
+                    })
+                    return {
+                        property: property,
+                        gallery: preparedGallery
+                    }
+                })
+                .catch ()   //make
+            })
+            return Promise.all(responseData)
+        })
+        .then( (responseData) => {
+            res.status(200).json(responseData)} )
+        .catch((err) => {
+            console.error("Error fetching data:", err)
+            res.status(500).json({message: "Internal Server Error"})
+        })
+})
 server.patch("/update-property/:id",(req,res) => {
         const objectID = req.params.id
         const objectData = req.body
@@ -129,7 +166,7 @@ server.get("/get-latest/:id", (req,res) => {
             Gallery.find({refObjectID: propertyRecord._id})
             .then ((galleryRecord) => {
                 const preparedGallery = galleryRecord.map( item => {
-                    const base64File = item.gallery.content.toString('base64')
+                    const base64File = item.gallery.content.toString("base64")
                     const fileForRendering = `data:image/jpeg;base64,${base64File}`
                     return {
                         imageID: item._id,

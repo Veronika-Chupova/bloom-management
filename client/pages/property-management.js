@@ -23,13 +23,12 @@ function PropertyManagement () {
         }
     }, [objectItems])
 
-    return <>{ renderReady ? 
+    return <>{ renderReady && 
     <div className="property-management-body">
         <ManagementHeader key={uuidv4()}/> {/*Autorisation*/}
         <ManagementBoard key={uuidv4()} objectItems={objectItems}/>
         <ManagementFooter key={uuidv4()}/>
-    </div> : 
-    <></> 
+    </div>
     }</>
 }
 
