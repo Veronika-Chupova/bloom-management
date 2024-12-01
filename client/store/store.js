@@ -9,6 +9,8 @@ const defaultState = {
 const reducer = (state = defaultState, action) => {
 
     switch (action.type) {
+        case "SET_USER":
+            return {...state, user: action.payload }
         case "GET_DATA":
             return {...state, items: [...action.payload]}
 

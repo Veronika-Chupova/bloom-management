@@ -4,9 +4,7 @@ import { useDispatch, useSelector } from "react-redux"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import {v4 as uuidv4} from "uuid"
-import SaveBtn from "./SaveBtn"
-import EditBtn from "./EditBtn"
-import PublishBtn from "./PublishBtn"
+import PropertyActionBtn from "./PropertyActionBtn"
 import ToggleBtn from "./ToggleBtn"
 import Selector from "./Selector"
 import Input from "./Input"
@@ -15,6 +13,7 @@ import { changeData, createObject, updateStatus } from "../../store/actions"
 
 function ObjectDetails ({ isReadOnly, property }) {
     const tempGallery = useSelector (state => state.temporaryGallery)
+    const user = useSelector (state => state.user)
     const dispatch = useDispatch()
     const router = useRouter()
     const [readOnly, setReadOnly] = useState (isReadOnly)
@@ -66,17 +65,21 @@ function ObjectDetails ({ isReadOnly, property }) {
         setReadOnly (false)
     }
 
-    async function handleSaving () {
+    async function handleSaving (event) {
         if (property?.objectID) {
             const data = {
                 objectID: property.objectID,
-                status: status,
+                status: event === "publish" ? "Active" : status,
                 objectData: formData
+            }
+            if (event === "publish") {
+                data.link = `/property/${property?.objectID}`
             }
             changeData(dispatch, data)
         } else {
             const data = {
                 status: status,
+                creator: user,
                 objectData: formData,
                 gallery: tempGallery
             }
@@ -88,15 +91,11 @@ function ObjectDetails ({ isReadOnly, property }) {
         }
     }
 
-    // function handlePublishing() {
-    //     if (status === "Draft") {
-    //         const data = {
-    //             objectID: property.objectID,
-    //             status: "Active"
-    //         }
-    //         updateStatus (dispatch, data)
-    //     }
-    // }
+    function handlePublishing() {
+        if ( status != "Active" ) {
+            handleSaving("publish")
+        }
+    }
 
     function setDate (date) {
         setFormData(prev => {
@@ -131,7 +130,7 @@ function ObjectDetails ({ isReadOnly, property }) {
                         />
                         <Selector 
                             key={uuidv4()}
-                            optionSet={["Draft","Closed"]}
+                            optionSet={status === "Active" ? ["Active","Draft","Closed"] : ["Draft","Closed"]}
                             label="Status"
                             name="status" 
                             value= {status}
@@ -318,11 +317,13 @@ function ObjectDetails ({ isReadOnly, property }) {
                         readOnly={readOnly}
                     />                  
                 </div>
-                {readOnly ? 
-                    <EditBtn key={uuidv4()} onClick={handleEditing}/> : 
-                    <SaveBtn key={uuidv4()} onClick={handleSaving}/>
-                }
-                {/* {status === "Draft" && <PublishBtn key={uuidv4()} onClick={handlePublishing} />} */}
+                <div className="btn-row">
+                    {readOnly 
+                    ? <PropertyActionBtn key={uuidv4()} title="Edit" onClick={handleEditing}/> 
+                    : <PropertyActionBtn key={uuidv4()} title="Save" onClick={handleSaving}/>
+                    }
+                    {property?.objectID && <PropertyActionBtn key={uuidv4()} title="Publish" onClick={handlePublishing}/>}
+                </div>
             </form>
         </div>
     </div>

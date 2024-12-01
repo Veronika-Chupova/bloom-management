@@ -5,6 +5,7 @@ import Footer from "./components/Footer"
 import TitleSection from "./components/TitleSection"
 import PropertyBoard from "./components/PropertyBoard"
 import getData, { getFullData } from "../store/actions"
+import ManagementFooter from "./components/ManagementFooter"
 
 function Index () {
     const dispatch = useDispatch()
@@ -24,7 +25,8 @@ function Index () {
         <Header />
         <TitleSection />
         <PropertyBoard objectItems={objectItems}/>
-        <Footer />
+        <ManagementFooter />
+        {/* <Footer />
         <div> Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons"> Smashicons </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
         <a href="https://www.flaticon.com/free-icons/dot" title="dot icons">Dot icons created by Bharat Icons - Flaticon</a>
         <div> Icons made by <a href="https://www.freepik.com" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
@@ -39,6 +41,9 @@ function Index () {
         <div> Icons made by <a href="https://www.freepik.com" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
         <div> Icons made by <a href="https://www.freepik.com" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
         <div> Icons made by <a href="https://www.flaticon.com/authors/prosymbols-premium" title="Prosymbols Premium"> Prosymbols Premium </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
+        <div> Icons made by <a href="" title="Dwi ridwanto"> Dwi ridwanto </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
+        <div> Icons made by <a href="https://www.flaticon.com/authors/sumberrejeki" title="SumberRejeki"> SumberRejeki </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
+         */}
     </>}
     </>
 }

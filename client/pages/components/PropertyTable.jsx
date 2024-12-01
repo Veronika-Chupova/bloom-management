@@ -33,7 +33,8 @@ function PropertyTable ({ objectItems}) {
                         key={uuidv4()}
                         handleRowClick = {handleRowClick} 
                         objectID = {item.objectID} 
-                        status = {item.status} 
+                        status = {item.status}
+                        creator={item.creator} 
                         link = {item.link}
                         objectData = {item.objectData}
                     />            

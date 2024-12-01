@@ -1,5 +1,6 @@
+import Link from "next/link"
 
-function TableRow ({ handleRowClick, objectID, link, status, objectData }) {
+function TableRow ({ handleRowClick, objectID, link, creator, status, objectData }) {
     const date = objectData?.availableDate && new Date(objectData?.availableDate)
     const dateFormat = date instanceof Date ? 
     new Intl.DateTimeFormat('en-GB', {
@@ -12,14 +13,14 @@ function TableRow ({ handleRowClick, objectID, link, status, objectData }) {
                             <td>{objectID}</td>
                             <td>{objectData?.address}</td>
                             <td className="availability">{objectData?.availableDate && dateFormat}</td>
-                            <td>Agent Name</td>
+                            <td>{creator ?? ""}</td>
                             <td>{ (objectData?.pricePPPW && String(objectData?.pricePPPW) + " pppw") || (objectData?.pricePCM && String(objectData?.pricePCM + " pcm")) }</td>
                             <td data-name="link">
-                                {link && <a href={link} target="_blank">
+                                {link && <Link href={link} target="_blank">
                                     <div>
                                         link
                                     </div>
-                                </a>}
+                                </Link>}
                             </td>
                             <td>{objectData?.propertyType}</td>
                             <td>{status}</td>

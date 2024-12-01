@@ -2,15 +2,33 @@ import {v4 as uuidv4} from "uuid"
 
 const apiBaseUrl = String(process.env.NEXT_PUBLIC_API_BASE_URL)
 
-async function fileConverter (file) {
-    if (Buffer.isBuffer(file)) {
-        const reader = new FileReader
-        reader.onloadend = () => {
-            return reader.result
+//AUTHENTICATION VALIDATION
+export async function authCheck () {
+    const requestOptions = {
+        method: "GET",
+        headers: {"Content-type":"application/json"},
+        credentials: "include"
+    }
+    try {
+        const response = await fetch(`${apiBaseUrl}/authCheck`, requestOptions)
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
         }
-        reader.readAsDataURL (file)
-    } else {
+        const data = await response.json()
+        return data.user || undefined
+    } catch (error) {
+        console.error("Auth check error:", error)
         return undefined
+    }
+}
+
+export function setUser (dispatch, name) {
+    if (name) {
+        dispatch ({
+            type: "SET_USER",
+            payload: name
+        })
     }
 }
 
@@ -19,6 +37,7 @@ export default function getData (dispatch, status) {
     const requestOptions = {
         method: "GET",
         headers: {"Content-type" : "application/json"},
+        credentials: "include"
       }
     const reqCURL = status 
                     ? `${apiBaseUrl}/get-data/${status}` 
@@ -34,11 +53,12 @@ export default function getData (dispatch, status) {
         .then ((data) => {
             if (data?.length > 0) {
                 const preparedData = data.map( item => {
-                    const {objectID, link, status, ...objectData} = item
+                    const {objectID, link, status, creator, ...objectData} = item
                     const newItem = {
                         objectID: objectID,
                         status: status,
                         link: link,
+                        creator: creator,
                         gallery:[],
                         objectData: objectData
                     }
@@ -55,6 +75,7 @@ export function getFullData (dispatch, status) {
     const requestOptions = {
         method: "GET",
         headers: {"Content-type" : "application/json"},
+        credentials: "include"
       }
     const reqCURL = status 
                     ? `${apiBaseUrl}/get-fulldata/${status}` 
@@ -70,10 +91,11 @@ export function getFullData (dispatch, status) {
         .then ((data) => {
             if (data?.length > 0) {
                 const preparedData = data.map( item => {
-                    const {objectID, status, ...objectData} = item?.property
+                    const {objectID, status, creator, ...objectData} = item?.property
                     const newItem = {
                         objectID: objectID,
                         status: status,
+                        creator: creator,
                         objectData: objectData,
                         gallery: item?.gallery
                     }
@@ -90,6 +112,7 @@ export async function updateObject (dispatch, objectID) {
     const requestOptions = {
         method: "GET",
         headers: {"Content-type" : "application/json"},
+        credentials: "include"
       }
     fetch(`${apiBaseUrl}/get-latest/${objectID}`, requestOptions)     //try-catch
         .then((response) =>{
@@ -99,10 +122,11 @@ export async function updateObject (dispatch, objectID) {
           return response.json()
         })
         .then ((data) => {
-            const {objectID, status, ...objectData} = data.property
+            const {objectID, status, creator, ...objectData} = data.property
             const updatedObject = {
                 objectID: objectID,
                 status: status,
+                creator: creator,
                 objectData: objectData,
                 gallery: data.gallery
             }
@@ -118,7 +142,8 @@ export function addToGallery (dispatch, data) {
         formData.append("file", data.file)
         const requestOptions = {
             method: "POST",
-            body: formData,                                       
+            body: formData,
+            credentials: "include"                                       
         }
         fetch (`${apiBaseUrl}/upload-image/${data.objectID}`, requestOptions)     //try-catch
         .then ((response) => {
@@ -167,10 +192,11 @@ export async function createObject (dispatch, data) {
     const originalFiles = data.gallery.map( item => item.originalFile)
     const formData = new FormData ()
     // formData.append("files", originalFiles)
-    formData.append("objectData", JSON.stringify({...data.objectData, status: data.status}))
+    formData.append("objectData", JSON.stringify({...data.objectData, status: data.status, creator: data.creator}))
     const requestOptions = {
         method: "POST",
-        body: formData,                                       
+        body: formData,  
+        credentials: "include"                                     
     }
 
     const newObjectID = await fetch (`${apiBaseUrl}/create-object`, requestOptions)     //try-catch
@@ -180,13 +206,15 @@ export async function createObject (dispatch, data) {
         }
         return response.json()
     }).then ((data) => {
-        const {objectID, status, ...objectData} = data
+        const {objectID, status, creator, ...objectData} = data
         const newObject = {
             gallery: [], 
             objectID: objectID, 
             status: status,
+            creator: creator,
             objectData: objectData
         }
+
         dispatch ({type:"NEW_OBJECT", payload: newObject})
         dispatch ({type:"CLEAN_TEMP_GALLERY", payload:{ objectID: newObject.objectID}})
         return data.objectID
@@ -195,12 +223,78 @@ export async function createObject (dispatch, data) {
     return newObjectID
 }
 
+export async function login (data) {
+    const requestOptions = {
+        method: "POST",
+        headers: {"Content-type": "application/json"},
+        body: JSON.stringify(data),
+        credentials: "include"
+    }
+
+    const access = await fetch(`${apiBaseUrl}/login`, requestOptions)
+        .then (response => {
+            if (response.status === 403) {
+                return {redirect: "/change-password"}
+            }
+            if ( response.status === 401 ) {
+                return {message: "Wrong credentials"}
+            }
+            if ( response.status === 200 ) {
+                return null
+            }
+            throw new Error ("Respone status was not OK " + response.statusText)
+        })
+        .catch (error => {})
+    return access
+}
+
+export async function logout () {
+    const requestOptions = {
+        method: "POST",
+        headers: {"Content-type": "application/json"},
+        credentials: "include"
+    }
+
+    const result = await fetch(`${apiBaseUrl}/logout`, requestOptions)
+        .then ( response => {
+            if (!response.ok) {
+                throw new Error ("Response from the server was not OK:", response.statusText)
+            }
+            return true
+        })
+        .catch (error => {})    //make it
+    return result
+}
+
+export async function changePassword (data) {
+    const requestOptions = {
+        method: "POST",
+        headers: {"Content-type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include"
+    }
+
+    const result = await fetch(`${apiBaseUrl}/change-password`, requestOptions)
+        .then( response => {
+            if (!response.ok) {
+                throw new Error ("Respone status was not OK " + response.statusText)
+            }
+            if (response.status === 200) {
+                return true
+            } else {
+                return false
+            }
+        })
+        .catch (error => {})
+    return result
+}
 //DELETE Requests
 export function removeFromGallery (dispatch, data) {  
     if (data.objectID) {
         const requestOptions = {
             method: "DELETE",
-            headers: {"Content-type" : "application/json"}                                       
+            headers: {"Content-type" : "application/json"},
+            credentials: "include"                                       
         }
         fetch (`${apiBaseUrl}/remove-image/${data.fileName}`, requestOptions)     //try-catch
         .then ((response) => {
@@ -222,11 +316,12 @@ export function removeFromGallery (dispatch, data) {
 //PATCH Requests
 export function changeData (dispatch, data) {
 
-    const newData = {status: data.status, ...data?.objectData}
+    const newData = {status: data.status, link: data.link, ...data?.objectData}
     const requestOptions = {
         method: "PATCH",
         headers: {"Content-type" : "application/json"},
-        body: JSON.stringify (newData)
+        body: JSON.stringify (newData),
+        credentials: "include"
       }
 
     fetch (`${apiBaseUrl}/update-property/${data.objectID}`, requestOptions)     //try-catch
@@ -253,7 +348,8 @@ export function updateStatus (disabled, data) {
     const requestOptions = {
         method: "PATCH",
         headers: {"Content-type" : "application/json"},
-        body: JSON.stringify (requestData)
+        body: JSON.stringify (requestData),
+        credentials: "include"
       }
     
       fetch(`${apiBaseUrl}/update-status/${data.objectID}`, requestOptions)

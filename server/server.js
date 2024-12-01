@@ -6,6 +6,9 @@ const dotenv = require("dotenv")
 const mongoose = require("mongoose")
 const path = require("path")
 const next = require('next')
+const passport = require("passport")
+const session = require("express-session")
+const LocalStrategy = require("passport-local").Strategy
 
 dotenv.config()
 const clientDir = path.resolve(__dirname, '../client')
@@ -40,6 +43,12 @@ const connectionURI = String(process.env.MONGO_URI)
     }
 
 //DB SCHEMAS
+const userSchema = new mongoose.Schema({
+    name: {type: String, required: true},
+    email: { type: String, required: true },
+    password: { type: String, required: true },
+    tempPassword: { type: Boolean, required: true }
+})
 const gallerySchema = new mongoose.Schema({
     refObjectID: {
         type: mongoose.Schema.Types.ObjectId, // Refers to the ObjectId of a Property
@@ -56,6 +65,7 @@ const gallerySchema = new mongoose.Schema({
 const propertySchema = new mongoose.Schema ({
     objectID: { type: Number },
     status: { type: String },
+    creator: { type: String },
     link: { type: String },
     address: { type: String },
     postcode: { type: String },
@@ -83,6 +93,7 @@ const propertySchema = new mongoose.Schema ({
 const root = path.join(__dirname, '../client/public')
 
 //DB MODELS
+const User = mongoose.model("User", userSchema)
 const Gallery = mongoose.model("Gallery", gallerySchema)
 const Property = mongoose.model("PropertyDetail", propertySchema)
 
@@ -92,13 +103,114 @@ app.prepare().then(() => {
 server.use(express.static(root))
 server.use(express.urlencoded({ extended: true }))
 server.use(cors({
-    origin: ['http://localhost:3000', 'https://bloom-management-e3a1f4b07ded.herokuapp.com'],            //modify
+    origin: ['http://localhost:3000', 'https://bloom-management-e3a1f4b07ded.herokuapp.com'],
     credentials: true
 }))
 server.use(express.json())
 server.use(express.static(root))
 
+    //SESSION MIDDLEWARE
+server.use(
+    session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: 1000 * 60 * 60,
+        },
+    })
+)
+server.use(passport.initialize())
+server.use(passport.session())
+
+    //PASSPORT MIDDLEWARE
+function authUser (user, password, done) {
+    User.findOne({username: user})
+        .then( userRecord => {
+            if ( userRecord.password === password ) {
+                return done(null, { 
+                    id: userRecord._id,
+                    name: userRecord.name,
+                    tempPassword: userRecord.tempPassword })
+            } else {
+                return done(null, false, { message: "Invalid credentials" })
+            }
+        })
+}
+
+passport.use(new LocalStrategy(authUser))
+passport.serializeUser((user, done) => {
+    done(null, user.id)
+})
+passport.deserializeUser((id, done) => {
+    User.findById(id)
+        .then( userRecord => {
+            if (userRecord) {
+                done(null, userRecord)
+            } else {
+                done(new Error("User not found"), null)
+            }
+        })
+        .catch(error => {})    //make it
+})
+
+
 //API
+server.get("/authCheck", (req, res) => {
+    if (req.isAuthenticated()) {
+        res.status(200).json({ user: req.user.name })
+    } else {
+        res.status(401).json({ user: null })
+    }
+})
+
+server.post("/login", passport.authenticate('local'), (req, res) => {
+    if (req.user) {
+        if (req.user.tempPassword) {
+            res.status(403).json({ message: "Password change is required" })
+        } else {
+            res.status(200).json({ user: req.user.name })
+        }
+    } else {
+        res.status(401).json({message: "User not found"})
+    }
+})
+
+server.post("/change-password", (req, res) => {
+    const {username, password} = req.body
+    User.findOneAndUpdate (
+        { username: username}, 
+        {password: password, tempPassword: false},
+        { new: true, runValidators: true })
+        .then ( userRecord => {
+            if (userRecord) {
+                return res.status(200).json({ message: "Password has been changed" })
+            } else {
+                return res.status(404).json({ message: 'User not found' })
+            }
+        })
+        .catch(error => {}) //make this
+})
+
+server.post("/logout", (req, res) => {
+    req.logout( err => {
+        if (err) {
+            console.error("Error during logout:", err)
+            return res.status(500).json({ message: "Logout failed" })
+        }
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("Error destroying session:", err)
+                return res.status(500).json({ message: "Session destruction failed" })
+            }
+            res.clearCookie('connect.sid')
+            return res.status(200).json({ message: "Logged out successfully" })
+        })
+    })
+})
+
 server.get("/get-data/:status?",(req, res) => {
         const status = req?.params?.status || undefined
         const filterOptions = status ? {status: status} : {}
@@ -248,7 +360,6 @@ server.post("/create-object", (req,res) => {
         } catch (parseError) {
             return res.status(400).json({ error: "Invalid JSON in objectData" })
         }
-
         const nextIndex = maxIndex?.length > 0 ? maxIndex[0].max + 1 : 1
         const newProperty = new Property ({...objectData, objectID: nextIndex})
         newProperty.save().then(() => {
