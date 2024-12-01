@@ -8,14 +8,14 @@ export default function ImageFrame ({ gallery }) {
     return <div className="card-img-frame">            
         <img 
             className="card-img"
-            src={gallery[currentPicIndx]}     //Make it through import
+            src={Array.isArray(gallery) ? gallery[currentPicIndx] : ""}     //Make it through import
             alt="house image"
         />
-        {gallery.length > 1 && <GalleryControl
+        {gallery?.length > 1 && <GalleryControl
                                     key={uuidv4()}
                                     current={currentPicIndx} 
                                     changePic={setCurrentPicIndx} 
-                                    picNumber={gallery.length} 
+                                    picNumber={gallery?.length} 
                                 />}
     </div>
 }
