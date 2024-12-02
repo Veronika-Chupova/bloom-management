@@ -45,6 +45,6 @@ export default function Login () {
             </div>
             <button className="login-btn" type="submit" onClick={handleSubmission}><p>LOGIN</p></button>
         </form>
-        <a href="" className="forgot-password">Forgot password?</a>
+        {/* <a href="" className="forgot-password">Forgot password?</a> */}
     </div>
 }

@@ -11,8 +11,14 @@ function Index () {
     const dispatch = useDispatch()
     const objectItems = useSelector (state => state.items)
     const [renderReady, setRenderReady] = useState(false)
+    const [propHolder, setPropHolder] = useState ([])
+
     useEffect (() => {
-        getFullData(dispatch, "Active")
+        async function fetchData () {
+            const propNumber = await getFullData(dispatch, "Active")
+            setPropHolder([...Array.from({length: propNumber})])
+        }
+        fetchData()     
     }, [])          // stops working after several turns back
     useEffect (() => {        
         if (objectItems) {
@@ -24,7 +30,7 @@ function Index () {
     {renderReady && <>
         <Header />
         <TitleSection />
-        <PropertyBoard objectItems={objectItems}/>
+        <PropertyBoard objectItems={objectItems} objectHolders={propHolder}/>
         <ManagementFooter />
         {/* <Footer />
         <div> Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons"> Smashicons </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>

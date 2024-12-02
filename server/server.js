@@ -23,24 +23,24 @@ const server = express()
 //DB connection
 const connectionURI = String(process.env.MONGO_URI)
 
-    try {
-        mongoose.connect(connectionURI, {
-            useNewUrlParser: true,
-            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-            tlsInsecure: false
-        }).then (() => {
-            console.log("MongoDB connected successfully")
-        }).catch (err => {
-            console.log("Error with Mongo connection: ", err)
-        })
-    } catch (error) {
-        if (error.name === 'MongooseServerSelectionError') {
-            console.error('Server Selection Error:', error.message);
-        } else {
-            console.error('Connection Error:', error.message);
-        }
-        process.exit(1) // Exit process or handle it in another way
+try {
+    mongoose.connect(connectionURI, {
+        useNewUrlParser: true,
+        serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
+        tlsInsecure: false
+    }).then (() => {
+        console.log("MongoDB connected successfully")
+    }).catch (err => {
+        console.log("Error with Mongo connection: ", err)
+    })
+} catch (error) {
+    if (error.name === 'MongooseServerSelectionError') {
+        console.error('Server Selection Error:', error.message);
+    } else {
+        console.error('Connection Error:', error.message);
     }
+    process.exit(1) // Exit process or handle it in another way
+}
 
 //DB SCHEMAS
 const userSchema = new mongoose.Schema({
@@ -129,7 +129,10 @@ server.use(passport.session())
 function authUser (user, password, done) {
     User.findOne({username: user})
         .then( userRecord => {
-            if ( userRecord.password === password ) {
+            if (!userRecord) {
+                return done(null, false, { message: "User not found" })
+            }
+            if ( userRecord?.password === password ) {
                 return done(null, { 
                     id: userRecord._id,
                     name: userRecord.name,
@@ -138,60 +141,80 @@ function authUser (user, password, done) {
                 return done(null, false, { message: "Invalid credentials" })
             }
         })
+        .catch (error => {
+            console.error("Database error during authentication:", error)
+            return done(null, false, { message: "Error when fetching user data from DB" })
+        })
 }
 
 passport.use(new LocalStrategy(authUser))
 passport.serializeUser((user, done) => {
+    if (!user || !user.id) {
+        console.error("Error: User or user ID missing during serialization")
+        return done(new Error("User or user ID missing during serialization"))
+    }
     done(null, user.id)
 })
 passport.deserializeUser((id, done) => {
     User.findById(id)
         .then( userRecord => {
-            if (userRecord) {
-                done(null, userRecord)
-            } else {
-                done(new Error("User not found"), null)
+            if (!userRecord) {
+                console.error(`Error: User with ID ${id} not found during deserialization`)
+                return done(new Error("User not found"), null)
             }
+            return done(null, userRecord)
         })
-        .catch(error => {})    //make it
+        .catch(error => {
+            console.error("Database error during deserialization:", error)
+            return done(error, null)
+        })
 })
 
 
 //API
 server.get("/authCheck", (req, res) => {
     if (req.isAuthenticated()) {
-        res.status(200).json({ user: req.user.name })
+        if (!req.user || !req.user.name) {
+            console.error("Error: User or user name is missing during authentication check")
+            return res.status(401).json({ user: null, message: "Problem with user authentication"})
+        }
+        return res.status(200).json({ user: req.user.name })
     } else {
-        res.status(401).json({ user: null })
+        return res.status(401).json({ user: null, message: "Problem with user authentication" })
     }
 })
 
 server.post("/login", passport.authenticate('local'), (req, res) => {
-    if (req.user) {
-        if (req.user.tempPassword) {
-            res.status(403).json({ message: "Password change is required" })
-        } else {
-            res.status(200).json({ user: req.user.name })
-        }
-    } else {
-        res.status(401).json({message: "User not found"})
+    if (!req.user) {
+        console.error("Error: User or temp password data is missing during login")
+        return res.status(401).json({message: "Problem occured when login user"})
     }
+    if (req.user.tempPassword) {
+        return res.status(403).json({ message: "Password change is required" })
+    }
+    return res.status(200).json({ user: req.user.name })
 })
 
 server.post("/change-password", (req, res) => {
-    const {username, password} = req.body
+    const {username, password} = req.body || {}
+    if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" })
+    }
     User.findOneAndUpdate (
         { username: username}, 
         {password: password, tempPassword: false},
         { new: true, runValidators: true })
         .then ( userRecord => {
-            if (userRecord) {
-                return res.status(200).json({ message: "Password has been changed" })
-            } else {
+            if (!userRecord) {
+                console.error (`User not found: ${username}`)
                 return res.status(404).json({ message: 'User not found' })
             }
+            return res.status(200).json({ message: "Password has been changed" })
         })
-        .catch(error => {}) //make this
+        .catch(error => {
+            console.error ("DB error during password change: ", error)
+            return res.status(500).json({ message: 'Problem occured when changing password' })
+        })
 })
 
 server.post("/logout", (req, res) => {
@@ -200,7 +223,7 @@ server.post("/logout", (req, res) => {
             console.error("Error during logout:", err)
             return res.status(500).json({ message: "Logout failed" })
         }
-        req.session.destroy((err) => {
+        req.session.destroy( err => {
             if (err) {
                 console.error("Error destroying session:", err)
                 return res.status(500).json({ message: "Session destruction failed" })
@@ -212,12 +235,16 @@ server.post("/logout", (req, res) => {
 })
 
 server.get("/get-data/:status?",(req, res) => {
-        const status = req?.params?.status || undefined
+        const { status } = req.params || {}
         const filterOptions = status ? {status: status} : {}
 
         Property.find(filterOptions)
-            .then((preparedData) => {
-                res.status(200).json(preparedData)
+            .then( foundData => {
+                if (!foundData) {
+                    console.error(`Error happened when finding data status ${status}`)
+                    return res.status(404).json({message: "Problem occured when fetching data"})
+                }
+                return res.status(200).json(foundData)
             })
             .catch((err) => {
                 console.error("Error fetching data:", err)
@@ -225,105 +252,170 @@ server.get("/get-data/:status?",(req, res) => {
             })
     })
 
-server.get("/get-fulldata/:status?", (req, res) => {
-    const status = req?.params?.status || undefined
+server.get("/get-fulldata/:status?", async (req, res) => {
+    const {status} = req.params
     const filterOptions = status ? {status: status} : {}
-    // const responseData = []
 
-    Property.find(filterOptions)
-        .then( foundProperties => {
-            const responseData = foundProperties.map( property => {
-                return Gallery.find( {refObjectID: property._id} )
-                .then( propertyGallery => {
-                    const preparedGallery = propertyGallery.map( item => {
-                        const base64File = item.gallery.content.toString("base64")
-                        const fileForRendering = `data:image/jpeg;base64,${base64File}`
-                        return {
-                            imageID: item._id,
-                            file: fileForRendering
-                        }
-                    })
+    try {
+        // Fetch properties
+        const foundProperties = await Property.find(filterOptions)
+        if ( !foundProperties || !Array.isArray(foundProperties) ) {
+            console.error(`No properties found for status: ${status}`)
+            return res.status(404).json({ message: "Problem occured when fetching data" })
+        }
+        const responseData = await Promise.all(
+            foundProperties.map( async (property) => {
+                try {
+                    // Fetch galleries
+                    const foundGallery = await Gallery.find( {refObjectID: property._id} )
+                    if ( !foundGallery || !Array.isArray(foundGallery) ) {
+                        console.error(`No gallery found for property: ${property._id}`)
+                        throw new Error ("Problem occurred when fetching data")
+                    }
+                    const preparedGallery = foundGallery.map( item => {
+                            const base64File = item?.gallery?.content.toString("base64")
+                            const fileForRendering = `data:image/jpeg;base64,${base64File}`
+                            return {
+                                imageID: item._id,
+                                file: fileForRendering
+                            }
+                        })
                     return {
                         property: property,
                         gallery: preparedGallery
                     }
-                })
-                .catch ()   //make
+                } catch (galleryError) {
+                    console.error("Error fetching data:", galleryError)
+                    return {
+                        property: property,
+                        gallery: []
+                    }
+                }
             })
-            return Promise.all(responseData)
-        })
-        .then( (responseData) => {
-            res.status(200).json(responseData)} )
-        .catch((err) => {
-            console.error("Error fetching data:", err)
-            res.status(500).json({message: "Internal Server Error"})
-        })
+        )
+        return res.status(200).json(responseData)
+    } catch (error) {
+        console.error("Error fetching data:", error)
+        return res.status(500).json({ message: "Internal Server Error" })
+    }
 })
+
 server.patch("/update-property/:id",(req,res) => {
         const objectID = req.params.id
         const objectData = req.body
 
-        Property.findOneAndUpdate({objectID: objectID}, {...objectData}, { new: true, runValidators: true })
-            .then ((updatedObject) => {
+        if (!objectID || !objectData) {
+            console.error("Error: Object id or object data is missing during updating")
+            return res.status(400).json({message: "Problem occured when updating object"})
+        }
+
+        Property.findOneAndUpdate(
+            {objectID: objectID}, 
+            {...objectData}, 
+            { new: true, runValidators: true }
+        )
+            .then (updatedObject => {
                 return res.status(200).json(updatedObject)
             })
-            .catch ()   //make it
+            .catch ( error => {
+                console.error(`Error: Database error when updating property ${objectID}: `, error)
+                return res.status(500).json({ message: "Internal Server Error" })
+            })  
     })
 
-server.get("/get-latest/:id", (req,res) => {
-    const id = req.params.id
-    Property.findOne({objectID: id})
-    .then ((propertyRecord) => {
-        if (propertyRecord) {
-            Gallery.find({refObjectID: propertyRecord._id})
-            .then ((galleryRecord) => {
-                const preparedGallery = galleryRecord.map( item => {
-                    const base64File = item.gallery.content.toString("base64")
-                    const fileForRendering = `data:image/jpeg;base64,${base64File}`
-                    return {
-                        imageID: item._id,
-                        file: fileForRendering
-                    }
-                })
-                const responseData = {
-                    property: propertyRecord,
-                    gallery: preparedGallery
-                }
-                return res.status(200).json(responseData)
-            }). catch (err => {})    // make proper handling
-        } else {
-            return res.status(500).json("Object is not found")
+server.get("/get-latest/:id", async (req,res) => {
+    const {id} = req.params
+    if (!id) {
+        console.error("Error: Requested object id is missing")
+        return res.status(400).json({message: "Problem occured when fetching data"})
+    }
+    try {
+        const propertyRecord = await Property.findOne({objectID: id})
+        if (!propertyRecord) {
+            console.error("Error: Requested object id not found")
+            return res.status(404).json({message: "Requested object not found"})
         }
-    }).catch (err => {})    // make proper handling
+        const foundGallery = await Gallery.find({refObjectID: propertyRecord._id})
+        if (!foundGallery || !Array.isArray(foundGallery)) {
+            console.error(`Error: Gallery for object id ${id} not found`)
+            return res.status(200).json({
+                propery: propertyRecord,
+                gallery: []
+            })
+        }
+        const preparedGallery = foundGallery.map( item => {
+            const base64File = item.gallery.content.toString("base64")
+            const fileForRendering = `data:image/jpeg;base64,${base64File}`
+            return {
+                imageID: item._id,
+                file: fileForRendering
+            }
+        })
+        const responseData = {
+            property: propertyRecord,
+            gallery: preparedGallery
+        }
+        return res.status(200).json(responseData)
+    } catch (error) {
+        console.error(`Error: Database error when fetching data or gallery for object id ${id}: `, error)
+        return res.status(500).json({ message: "Internal Server Error" })
+    }
 })
 
 server.post ("/upload-image/:id", (req,res) => {
-    const id = req.params.id
+    const {id} = req.params
+    if (!id) {
+        console.error("Error: Requested object id is missing")
+        return res.status(400).json({message: "Problem occured when fetching data"})
+    }
     const formData = new formidable.IncomingForm({maxFileSize: 50 * 1024 * 1024})
     formData.parse(req, async (err, fields, files) => {
         if (err) {
-            return res.status(500).json({ error: "File upload failed" })
+            console.error(`Error: Parsing form data failed during file uploading for object id ${id}`, err)
+            return res.status(500).json({ error: "Internal server error" })
         }
-        const {originalFilename, mimetype, size, filepath} = files.file[0] // Extract first file
-        const fileContent = await fs.readFile(filepath) // Read binary content
+        if ( !files.file || !Array.isArray(files.file) ) {
+            console.error(`Error: File data is missing or invalid during file uploading for object id ${id}`)
+            return res.status(500).json({ error: "Internal server error" })
+        }
+        const {originalFilename, mimetype, size, filepath} = files.file[0]
+        const fileContent = await fs.readFile(filepath)
         const bufferContent = Buffer.from(fileContent)
-        const refObject = await Property.findOne({objectID: id})
-        const galleryItem = {
-            name: originalFilename,
-            type: mimetype,
-            size: size,
-            content: bufferContent, // Binary content
+        if (!originalFilename || !mimetype || !size || !filepath) {
+            console.error("Error: File data is missing")
+            return res.status(400).json({message: "File uploading failed"})
         }
-        Gallery.create ({
-            refObjectID: refObject._id,
-            gallery: galleryItem
-        }).then((responseData) => {
-            return res.status(200).json({imageID: responseData._id})
-        })
+        try {
+            const refObject = await Property.findOne({objectID: id})
+            if (!refObject) {
+                console.error(`Error: Object id ${id} not found`)
+                return res.status(404).json({message: "Object not found"})
+            }
+            const galleryItem = {
+                name: originalFilename,
+                type: mimetype,
+                size: size,
+                content: bufferContent, // Binary content
+            }
+            Gallery.create ({
+                refObjectID: refObject._id,
+                gallery: galleryItem
+            })
+                .then( responseData => {
+                    return res.status(200).json({imageID: responseData._id})
+                })
+                .catch (error => {
+                    console.error("Problem occured when creating object: ", error)
+                    return res.status(500).json({message: "File uploading failed"})
+                })
+        } catch (error) {
+            console.error(`Error: Database error when uploading file for property ${id}: `, error)
+            return res.status(500).json({ message: "Internal Server Error" })
+        } 
     })
 })
 
-server.delete("/remove-image/:id", (req,res) => {
+server.delete("/remove-image/:id", (req,res) => {           //error handling from this point
     const id = req.params.id
     Gallery.findByIdAndDelete(id)
     .then(() => {
@@ -396,6 +488,23 @@ server.patch("/update-status/:id", (req,res) => {
     })
 })
 
+server.get("/get-property-number/:status?", (req,res) => {
+    const {status} = req.params
+    const filterOptions = status ? {status: status} : {}
+
+    Property.countDocuments(filterOptions)
+        .then( result => {
+            if (!result || !(typeof result === 'number')) {
+                console.error(`Error: Failed to count records for status: ${status}`)
+                return res.status(400).json({ message: "Problem occured when fetching data" })
+            }
+            return res.status(200).json({propNumber: result})
+        })
+        .catch (error => {
+            return res.status(500).json({ message: "Internal Server Error" })
+        })
+})
+
     // Catch-all handler to serve Next.js pages
     server.all('*', (req, res) => {
         return handle(req, res)
@@ -407,18 +516,7 @@ server.patch("/update-status/:id", (req,res) => {
     })
 })
 
-// Deployment path
-// const __dirname = path.dirname(fileURLToPath(import.meta.url))
-// const root = path.join(__dirname, '..', 'client', 'build')
-// const PORT = process.env.PORT || 3500
-// dotenv.config()
 
-
-
-
-// server.listen(PORT, () => {
-//     console.log(`Example app listening on port ${PORT}`)
-//   })
 
 
   

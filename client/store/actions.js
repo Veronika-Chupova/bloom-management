@@ -2,6 +2,14 @@ import {v4 as uuidv4} from "uuid"
 
 const apiBaseUrl = String(process.env.NEXT_PUBLIC_API_BASE_URL)
 
+
+//WORK WITH TEMP GALLERY
+export function addToTemp (dispatch, file) {
+    dispatch ({
+        type: "ADD_TO_TEMP",
+        payload: file
+    })
+}
 //AUTHENTICATION VALIDATION
 export async function authCheck () {
     const requestOptions = {
@@ -71,24 +79,22 @@ export default function getData (dispatch, status) {
         })
 }
 
-export function getFullData (dispatch, status) {
+export async function getFullData (dispatch, status) {
     const requestOptions = {
         method: "GET",
         headers: {"Content-type" : "application/json"},
         credentials: "include"
       }
-    const reqCURL = status 
-                    ? `${apiBaseUrl}/get-fulldata/${status}` 
-                    : `${apiBaseUrl}/get-fulldata`
+    const reqCURL = status ? `/${status}` : ""
 
-    fetch(reqCURL, requestOptions)     //try-catch
-        .then((response) =>{
+    fetch(`${apiBaseUrl}/get-fulldata` + reqCURL, requestOptions)     //try-catch
+        .then( response =>{
             if (!response.ok) {
                 throw new Error ("Response status was not OK " + response.statusText)
             }
             return response.json()
         })
-        .then ((data) => {
+        .then ( data => {
             if (data?.length > 0) {
                 const preparedData = data.map( item => {
                     const {objectID, status, creator, ...objectData} = item?.property
@@ -106,6 +112,25 @@ export function getFullData (dispatch, status) {
                 dispatch ({type:"GET_DATA", payload: []})
             }
         })
+        .catch(error => {
+            return null
+        })
+
+    const propNumber = await fetch(`${apiBaseUrl}/get-property-number` + reqCURL, requestOptions)
+        .then( response => {
+            if (!response.ok) {
+                throw new Error ("Response status was not OK " + response.statusText)
+            }
+            return response.json()
+        })
+        .then( data => {
+            return data?.propNumber || null
+        })
+        .catch (error => {
+            console.error ("Problem occured when fetching data")
+            return null
+        })
+    return propNumber
 }
 
 export async function updateObject (dispatch, objectID) {

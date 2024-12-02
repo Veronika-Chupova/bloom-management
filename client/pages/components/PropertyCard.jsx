@@ -15,10 +15,12 @@ export default function PropertyCard ({ property, currentGallery }) {  //picture
     return <>
     <div className="card">
         <ImageFrame key={uuidv4()} gallery={gallery}/>
-        <Link href={`/property/${property?.objectID}`}>
-            <CardInfo key={uuidv4()} propertyData={propertyData}/>
-        </Link>
-        <Actions key={uuidv4()} objectID={property?.objectID} />
+        <div className="card-info-container">
+            <Link href={`/property/${property?.objectID}`}>
+                <CardInfo key={uuidv4()} propertyData={propertyData}/>
+             </Link>
+             <Actions key={uuidv4()} objectID={property?.objectID} />
+        </div>
     </div>
     </>
 }

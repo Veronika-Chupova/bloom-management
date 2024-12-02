@@ -47,7 +47,8 @@ const reducer = (state = defaultState, action) => {
                     return element
                 }
             })}
-        
+        case "ADD_TO_TEMP":
+            return {...state, temporaryGallery: [...state.temporaryGallery, action.payload]}
         case "ADD_TO_TEMP_GALLERY":
             return {...state, temporaryGallery: [...state.temporaryGallery, action.payload]}
 

@@ -14,7 +14,7 @@ function CardInfo ({ propertyData }) {
     const suitText = []
     const nonSuitText = []
 
-    return <div className="card-info expansive">
+    return <div className="card-info">
         <div className="price-block">
             <h3>{ 
                 (propertyData?.pricePPPW && "£" + propertyData?.pricePPPW + "pppw") || 

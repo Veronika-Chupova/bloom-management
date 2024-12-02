@@ -24,6 +24,7 @@ function PropertyPassport ({ isReadOnly, property }) {
     <BackBtn key={uuidv4()} onClick={handleBackBtn}/>
     <div className="new-prop-board">
         <ObjectDetails key={uuidv4()} isReadOnly={isReadOnly} property={property} />
+        {/* <ObjectGallery key={uuidv4()} property={property} gallery={gallery}/> */}
         {!(path==="/new-property") && <ObjectGallery key={uuidv4()} property={property} gallery={gallery}/>}
         <ObjectPreview key={uuidv4()} property={property} gallery={gallery}/>
     </div>
