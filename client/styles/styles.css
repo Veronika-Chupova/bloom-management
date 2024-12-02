@@ -62,8 +62,9 @@ body {
     /* font-family: 'Roc Grotesk', sans-serif; */
     /* font-family: 'Libre Franklin', sans-serif; */
     font-family: 'Fahkwang', sans-serif;
-    letter-spacing: 0.08em;
+    /* letter-spacing: 0.08em; */
     line-height: 180%;
+    font-weight: 500;
     color: var(--purple-text);
 }
 
