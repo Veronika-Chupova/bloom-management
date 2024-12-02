@@ -8,7 +8,7 @@ function PropertyBoard ({ objectItems, objectHolders }) {
     return <div className="main-board">
         {objectItems?.length > 0
             ? objectItems?.map( property => <PropertyCard key={uuidv4()} property={property} currentGallery={property?.gallery} />)
-            : objectHolders.map (item => <FakeCard key={uuidv4()} />)
+            : objectHolders?.map (item => <FakeCard key={uuidv4()} />)
         }
     </div>
 }
