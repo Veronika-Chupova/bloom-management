@@ -38,7 +38,7 @@ export default function PropertyDetails ({ objectID }) {
         }
     }, [property])
 
-    return (isReady && renderReady) && <PropertyPassport key={uuidv4()} isReadOnly={true} property={property} />
+    return (isReady && renderReady) && <PropertyPassport isReadOnly={true} property={property} />
 }
 
 export const getServerSideProps = wrapper.getServerSideProps((store) => async (context) => {

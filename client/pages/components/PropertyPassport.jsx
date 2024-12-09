@@ -20,15 +20,14 @@ function PropertyPassport ({ isReadOnly, property }) {
     }
 
     return <div className="property-passport">
-    <ManagementHeader key={uuidv4()} currentUser={currentUser}/> {/*Autorisation*/}
-    <BackBtn key={uuidv4()} onClick={handleBackBtn}/>
+    <ManagementHeader currentUser={currentUser}/>
+    <BackBtn onClick={handleBackBtn}/>
     <div className="new-prop-board">
-        <ObjectDetails key={uuidv4()} isReadOnly={isReadOnly} property={property} />
-        {/* <ObjectGallery key={uuidv4()} property={property} gallery={gallery}/> */}
-        {!(path==="/new-property") && <ObjectGallery key={uuidv4()} property={property} gallery={gallery}/>}
-        <ObjectPreview key={uuidv4()} property={property} gallery={gallery}/>
+        <ObjectDetails isReadOnly={isReadOnly} property={property} />
+        {!(path==="/new-property") && <ObjectGallery property={property} gallery={gallery}/>}
+        <ObjectPreview property={property} gallery={gallery}/>
     </div>
-    <ManagementFooter key={uuidv4()}/>
+    <ManagementFooter />
 </div>
 }
 

@@ -1,7 +1,16 @@
 import { useRouter } from "next/router"
+import ManagementFooter from "../components/ManagementFooter"
+import Header from "../components/Header"
+import PropertyBoard from "../components/PropertyBoard"
+import TitleSection from "../components/TitleSection"
 
 export default function Property () {
     const router = useRouter()
     const { id } = router.query
-    return <h1>The detailed info about Property {id} will be displayed here</h1>
+    return <>
+        <Header />
+        <TitleSection />
+        <PropertyBoard />
+        <ManagementFooter />
+    </>
 }

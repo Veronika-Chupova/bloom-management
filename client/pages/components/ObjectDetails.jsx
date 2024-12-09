@@ -8,16 +8,24 @@ import PropertyActionBtn from "./PropertyActionBtn"
 import ToggleBtn from "./ToggleBtn"
 import Selector from "./Selector"
 import Input from "./Input"
+import InformPopup from "./InformPopup"
 import { changeData, createObject, updateStatus } from "../../store/actions"
 
 
 function ObjectDetails ({ isReadOnly, property }) {
+    const popupDataObject = {
+        title: null,
+        message: null,
+        type: null
+    }
     const tempGallery = useSelector (state => state.temporaryGallery)
     const user = useSelector (state => state.user)
     const dispatch = useDispatch()
     const router = useRouter()
     const [readOnly, setReadOnly] = useState (isReadOnly)
-    const propertyData = property?.objectData     
+    const propertyData = property?.objectData  
+    const [popupIsOpen, setPopupOpen] = useState (false)  
+    const [popupInfo, setPopupInfo] = useState (popupDataObject) 
     const [status, setStatus] = useState (property?.status ?? "Draft")
     const [formData, setFormData] = useState ({
         address: propertyData?.address ?? "",
@@ -66,6 +74,19 @@ function ObjectDetails ({ isReadOnly, property }) {
     }
 
     async function handleSaving (event) {
+        if ( !(formData.address && formData.postcode && (formData.pricePCM || formData.pricePPPW))
+            || (event === "publish" && property?.gallery?.length < 1) ) {
+                setPopupInfo (() => {
+                    popupDataObject.title = event === "publish" ? "Publishing Error" : "Saving Error"
+                    popupDataObject.message = event === "publish"
+                                                ? "Before publishing, please make sure the fields Address, Postcode, Price, and at least one gallery photo are filled out"
+                                                : "Before saving, please make sure the fields Address, Postcode, and Price are filled out"
+                    popupDataObject.type = "error"
+                    return popupDataObject
+                })
+                setPopupOpen (true)
+                return null
+        }
         if (property?.objectID) {
             const data = {
                 objectID: property.objectID,
@@ -262,7 +283,7 @@ function ObjectDetails ({ isReadOnly, property }) {
                             value={formData.pricePPPW} 
                             type="number" 
                             handleInput={handleInput} 
-                            readOnly={readOnly} 
+                            readOnly={readOnly || formData.pricePCM} 
                         />
                         <Input 
                             key="pricePCM"
@@ -271,7 +292,7 @@ function ObjectDetails ({ isReadOnly, property }) {
                             value={formData.pricePCM} 
                             type="number" 
                             handleInput={handleInput} 
-                            readOnly={readOnly} 
+                            readOnly={readOnly || formData.pricePPPW} 
                         />
                         <Input 
                             key="deposit"
@@ -326,6 +347,11 @@ function ObjectDetails ({ isReadOnly, property }) {
                 </div>
             </form>
         </div>
+        <InformPopup 
+            isOpen={popupIsOpen} 
+            setOpen={setPopupOpen}
+            info={popupInfo}
+            />
     </div>
 }
 

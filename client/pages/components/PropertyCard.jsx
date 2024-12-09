@@ -19,7 +19,7 @@ export default function PropertyCard ({ property, currentGallery }) {  //picture
             <Link href={`/property/${property?.objectID}`}>
                 <CardInfo key={uuidv4()} propertyData={propertyData}/>
              </Link>
-             <Actions key={uuidv4()} objectID={property?.objectID} />
+             <Actions key={uuidv4()} objectID={property?.objectID} propertyData={propertyData} />
         </div>
     </div>
     </>

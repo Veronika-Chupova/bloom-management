@@ -1,16 +1,29 @@
-import { v4 as uuidv4 } from 'uuid'
-import PropertyCard from "./PropertyCard"
-import FakeCard from "./FakeCard"
+import defaultImg from "../../public/assets/living-room-placeholder.jpg"
 
-function PropertyBoard ({ objectItems, objectHolders }) {
-    console.log(objectItems, objectHolders)
-    
-    return <div className="main-board">
-        {objectItems?.length > 0
-            ? objectItems?.map( property => <PropertyCard key={uuidv4()} property={property} currentGallery={property?.gallery} />)
-            : objectHolders?.map (item => <FakeCard key={uuidv4()} />)
-        }
+export default function PropertyBoard () {
+    return <>
+    <div className="prop-section">
+        <div className="prop-title-img">
+            <img src={defaultImg.src}/>
+        </div>
+        <div className="prop-summary">
+            <div className="prop-address">
+                <h2>Address</h2>
+            </div>
+            <div className="prop-price">
+                <p>Price</p>
+            </div>
+            <div className="prop-features">
+                features
+            </div>
+            <div className="prop-section-links">
+                Links
+            </div>
+            <div className="prop-fast-contact">
+                <p>Interested?</p>
+        <p>Click to contact us <a href={`https://wa.me/447445956693?text=Hello,%20I%20am%20interested%20in%20Property%20`} target="blank">here</a>!</p>
+            </div>
+        </div>
     </div>
+    </>
 }
-
-export default PropertyBoard
